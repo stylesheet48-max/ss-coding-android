@@ -1,5 +1,6 @@
 import "./style.scss";
 import Sidebar from "components/sidebar";
+import tag from "html-tag-js";
 import fileIcons from "lib/fileIcons";
 import settings from "lib/settings";
 import dragMove from "./dragMove";
@@ -20,47 +21,61 @@ export default [
 ];
 
 function createEmptyState() {
-	return (
-		<section
-			className="ss-files-empty"
-			aria-label="Workspace files empty state"
-		>
-			<div className="ss-files-empty-card ss-glass-card">
-				<div className="ss-files-empty-icon">
-					<span className="icon folder_open" aria-hidden="true" />
-				</div>
-				<h3>No Folder Opened</h3>
-				<p>
-					Open a project folder from device storage or start a new buffer to
-					explore your workspace.
-				</p>
-				<div className="ss-files-empty-actions">
-					<button
-						type="button"
-						className="ss-btn-primary"
-						onclick={(e) => {
-							e.stopPropagation();
-							acode.exec("open-folder");
-						}}
-					>
-						<span className="icon folder_open" aria-hidden="true" />
-						<span>{strings["open folder"] || "Open Folder"}</span>
-					</button>
-					<button
-						type="button"
-						className="ss-btn-glass"
-						onclick={(e) => {
-							e.stopPropagation();
-							acode.exec("new-file");
-							Sidebar.hide();
-						}}
-					>
-						<span className="icon add" aria-hidden="true" />
-						<span>{strings["new file"] || "New File"}</span>
-					</button>
-				</div>
-			</div>
-		</section>
+	const openFolderBtn = tag(
+		"button",
+		{
+			type: "button",
+			className: "ss-btn-primary",
+			onclick(e) {
+				e.stopPropagation();
+				acode.exec("open-folder");
+			},
+		},
+		[
+			tag("span", { className: "icon folder_open", "aria-hidden": "true" }),
+			tag("span", { textContent: strings["open folder"] || "Open Folder" }),
+		],
+	);
+
+	const newFileBtn = tag(
+		"button",
+		{
+			type: "button",
+			className: "ss-btn-glass",
+			onclick(e) {
+				e.stopPropagation();
+				acode.exec("new-file");
+				Sidebar.hide();
+			},
+		},
+		[
+			tag("span", { className: "icon add", "aria-hidden": "true" }),
+			tag("span", { textContent: strings["new file"] || "New File" }),
+		],
+	);
+
+	return tag(
+		"section",
+		{
+			className: "ss-files-empty",
+			"aria-label": "Workspace files empty state",
+		},
+		[
+			tag("div", { className: "ss-files-empty-card ss-glass-card" }, [
+				tag("div", { className: "ss-files-empty-icon" }, [
+					tag("span", { className: "icon folder_open", "aria-hidden": "true" }),
+				]),
+				tag("h3", { textContent: "No Folder Opened" }),
+				tag("p", {
+					textContent:
+						"Open a project folder from device storage or start a new buffer to explore your workspace.",
+				}),
+				tag("div", { className: "ss-files-empty-actions" }, [
+					openFolderBtn,
+					newFileBtn,
+				]),
+			]),
+		],
 	);
 }
 

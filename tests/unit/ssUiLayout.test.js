@@ -300,6 +300,7 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 			{
 				"./style.scss": {},
 				"components/sidebar": Sidebar,
+				"html-tag-js": tag,
 				"lib/fileIcons": { refreshRenderedIcons: vi.fn() },
 				"lib/settings": { OPEN_FILE_LIST_POS_SIDEBAR: "sidebar", value: {} },
 				"./dragMove": { init: vi.fn() },
