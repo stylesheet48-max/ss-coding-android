@@ -131,7 +131,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v1.13.5-build.${{ github.run_number }}
           name: SS Coding v1.13.5 (Build ${{ github.run_number }})
