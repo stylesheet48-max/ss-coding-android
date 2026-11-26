@@ -1,0 +1,59 @@
+#ss-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--ss-statusbar-height, 26px);
+  padding: 0 10px;
+  background: var(--ss-surface-glass);
+  backdrop-filter: blur(var(--ss-blur-sm));
+  -webkit-backdrop-filter: blur(var(--ss-blur-sm));
+  border-top: 1px solid var(--ss-border-glass);
+  color: var(--ss-text-secondary);
+  font-size: 0.72rem;
+  font-family: var(--ss-font-mono);
+  box-sizing: border-box;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &.is-hidden {
+    display: none;
+  }
+
+  .ss-status-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .ss-status-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 7px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:active {
+      background: var(--ss-accent-soft);
+      color: var(--ss-accent);
+    }
+
+    &.is-lsp {
+      background: var(--ss-accent-soft);
+      color: var(--ss-accent);
+      font-weight: 600;
+    }
+  }
+}

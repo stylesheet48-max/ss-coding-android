@@ -1,0 +1,38 @@
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  position: relative;
+  margin: 0 auto;
+  border-radius: 28px;
+  background: var(--ss-glass-bg-strong, rgba(255, 255, 255, 0.84));
+  border: 1px solid var(--ss-glass-border-strong, rgba(255, 255, 255, 0.88));
+  box-shadow:
+    0 18px 40px rgba(37, 99, 235, 0.14),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+
+  .logo-img {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    object-fit: contain;
+    position: relative;
+    z-index: 1;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -18px;
+    border-radius: 999px;
+    background: radial-gradient(
+      circle,
+      rgba(37, 99, 235, 0.24),
+      rgba(56, 189, 248, 0.08) 48%,
+      transparent 72%
+    );
+    pointer-events: none;
+  }
+}

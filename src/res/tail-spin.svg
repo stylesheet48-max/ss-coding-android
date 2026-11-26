@@ -1,0 +1,21 @@
+<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loading">
+  <defs>
+    <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="tail-spin-gradient">
+      <stop stop-color="#38bdf8" stop-opacity="0.15" offset="0%"/>
+      <stop stop-color="#3b82f6" stop-opacity="0.7" offset="55%"/>
+      <stop stop-color="#2563eb" stop-opacity="1" offset="100%"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <circle cx="18" cy="18" r="14" stroke="rgba(37, 99, 235, 0.14)" stroke-width="3"/>
+    <path d="M18 4a14 14 0 0 1 14 14" stroke="url(#tail-spin-gradient)" stroke-width="3" stroke-linecap="round">
+      <animateTransform
+        attributeName="transform"
+        type="rotate"
+        from="0 18 18"
+        to="360 18 18"
+        dur="0.8s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg>

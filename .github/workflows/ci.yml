@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  quality:
+    name: Typecheck & Lint
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: |
+          npm install --prefix codemirror-lsp-client --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Biome check on SS Coding modules
+        run: npx @biomejs/biome check src/ui src/pages/welcome/welcome.js src/pages/about/about.js src/dialogs/loader.js src/lib/settings.js src/lib/config.js src/lib/commands.js src/theme/builder.js src/theme/preInstalled.js
