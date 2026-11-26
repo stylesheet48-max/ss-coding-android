@@ -60,8 +60,8 @@ jobs:
           NPM_CONFIG_LEGACY_PEER_DEPS: "true"
           NPM_CONFIG_IGNORE_SCRIPTS: "true"
         run: |
-          node utils/storage_manager.mjs y
           npm run setup
+          node utils/storage_manager.mjs y
 
       - name: Verify Cordova & Android SDK package ID
         run: |
