@@ -1062,7 +1062,7 @@ class TerminalManager {
 				width: 100%;
 				height: 100%;
 				box-sizing: border-box;
-				background: #1e1e1e;
+				background: var(--primary-color, #1e1e1e);
 				overflow: hidden;
 				position: relative;
 			}

@@ -46,10 +46,10 @@
   border: none;
   border-radius: var(--ss-radius-md);
   background: var(--ss-accent-gradient);
-  color: #ffffff;
+  color: var(--button-text-color, #ffffff);
   font-weight: 600;
   font-size: var(--ss-text-sm);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--active-color, #2563eb) 28%, transparent);
   cursor: pointer;
   transition:
     transform var(--ss-duration-fast) var(--ss-ease-out),
@@ -57,7 +57,7 @@
 
   &:active {
     transform: scale(0.97);
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--active-color, #2563eb) 20%, transparent);
   }
 }
 

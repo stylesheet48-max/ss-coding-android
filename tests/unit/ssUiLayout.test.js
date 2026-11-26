@@ -328,4 +328,178 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 		expect(emptySection.hidden).toBe(false);
 		expect(emptySection.querySelectorAll("button").length).toBe(2);
 	}, 30000);
+
+	it("uses reactive theme CSS variables everywhere and docks #ss-workspace-nav flush at bottom", () => {
+		const compiled = sass.compile(path.join(REPO_ROOT, "src/main.scss"), {
+			loadPaths: [path.join(REPO_ROOT, "src")],
+		}).css;
+
+		// Design system tokens react directly to active ThemeBuilder variables without dark/light static lock
+		expect(compiled).toContain("--ss-bg-solid: var(--secondary-color");
+		expect(compiled).toContain("--ss-bg-canvas: linear-gradient");
+		expect(compiled).toContain("--ss-accent: var(--active-color");
+		expect(compiled).toContain("--ss-text-primary: var(--primary-text-color");
+		expect(compiled).toContain("color-mix(in srgb, var(--secondary-color");
+		expect(compiled).not.toContain('body[theme-type="dark"]');
+
+		// Bottom navigation docked flush above system nav bar (no floating 8px bottom gap or 70px reservation)
+		const navMatch = compiled.match(/#ss-workspace-nav\s*\{[^}]+\}/);
+		expect(navMatch).toBeTruthy();
+		const navRule = navMatch[0];
+		expect(navRule).toContain("bottom: env(safe-area-inset-bottom, 0px)");
+		expect(navRule).toContain("width: 100%");
+		expect(navRule).toContain("border-radius: 0");
+		expect(navRule).not.toContain("bottom: calc(8px");
+
+		expect(compiled).toContain(
+			"margin-bottom: calc(var(--ss-nav-height, 52px) + env(safe-area-inset-bottom, 0px))",
+		);
+		expect(compiled).not.toContain("height: calc(100vh - 48px - 70px)");
+
+		// Spinner SVG adapts to theme currentColor
+		const spinnerSvg = fs.readFileSync(
+			path.join(REPO_ROOT, "src/res/tail-spin.svg"),
+			"utf8",
+		);
+		expect(spinnerSvg).toContain('stop-color="currentColor"');
+		expect(spinnerSvg).not.toContain("#2563eb");
+		expect(spinnerSvg).not.toContain("#38bdf8");
+	}, 30000);
+
+	it("updates app styles, editor, system bars, and open terminals on every theme change", async () => {
+		const dom = new Window({ url: "https://localhost" });
+		installDomGlobals(dom);
+		const tag = require("html-tag-js");
+		dom.window.document.head.get = (sel) =>
+			dom.window.document.head.querySelector(sel);
+		globalThis.CustomEvent = dom.window.CustomEvent;
+		globalThis.localStorage = dom.window.localStorage;
+
+		const settingsState = {
+			appTheme: "ssGlass",
+			terminalSettings: { theme: "light" },
+		};
+		const updateSettingsSpy = vi.fn((patch) => {
+			Object.assign(settingsState, patch);
+		});
+		const setEditorThemeSpy = vi.fn();
+		const updateTerminalsSpy = vi.fn();
+		const setUiThemeSpy = vi.fn();
+		const themeChangeEvents = [];
+		dom.window.addEventListener("ss-theme-change", (e) => {
+			themeChangeEvents.push(e.detail.id);
+		});
+
+		class FakeTheme {
+			constructor(opts) {
+				Object.assign(this, opts);
+			}
+			matches(target) {
+				return this.id.toLowerCase() === String(target).toLowerCase();
+			}
+			get css() {
+				return `:root { --primary-color: ${this.primaryColor}; --active-color: ${this.activeColor}; }`;
+			}
+			toJSON() {
+				return {
+					primaryColor: this.primaryColor,
+					activeColor: this.activeColor,
+				};
+			}
+		}
+
+		const fakeThemes = [
+			new FakeTheme({
+				id: "ocean",
+				name: "Ocean",
+				type: "dark",
+				primaryColor: "#0f172a",
+				activeColor: "#38bdf8",
+				preferredEditorTheme: "ace/theme/one_dark",
+				preferredTerminalTheme: "ocean",
+			}),
+			new FakeTheme({
+				id: "crimson",
+				name: "Crimson Custom",
+				type: "dark",
+				primaryColor: "#2a0a12",
+				activeColor: "#f43f5e",
+				preferredEditorTheme: "ace/theme/monokai",
+				preferredTerminalTheme: null,
+			}),
+			new FakeTheme({
+				id: "mint",
+				name: "Mint",
+				type: "light",
+				primaryColor: "#ecfdf5",
+				activeColor: "#10b981",
+				preferredEditorTheme: "ace/theme/chrome",
+				preferredTerminalTheme: "light",
+			}),
+		];
+
+		const themeListMod = compileJsxFile(
+			"src/theme/list.js",
+			{
+				"lib/fonts": { setFont: vi.fn() },
+				"lib/settings": {
+					value: settingsState,
+					update: updateSettingsSpy,
+					on: vi.fn(),
+				},
+				"lib/systemConfiguration": { isDeviceDarkTheme: () => false },
+				"settings/terminalSettings": {
+					updateActiveTerminals: updateTerminalsSpy,
+				},
+				"utils/color": (val) => ({ hex: { toString: () => val } }),
+				"./builder": FakeTheme,
+				"./preInstalled": Object.assign(fakeThemes, {
+					updateSystemTheme: vi.fn(),
+				}),
+			},
+			{
+				tag,
+				document: dom.window.document,
+				window: dom.window,
+				localStorage: dom.window.localStorage,
+				CustomEvent: dom.window.CustomEvent,
+				DOES_SUPPORT_THEME: true,
+				editorManager: { editor: { setTheme: setEditorThemeSpy } },
+				system: { setUiTheme: setUiThemeSpy },
+				setTimeout: () => 0,
+				clearTimeout: () => {},
+			},
+		);
+
+		const themesMod = themeListMod.default;
+		themesMod.init();
+		await themesMod.apply("ocean", true);
+		expect(dom.window.document.body.getAttribute("theme-type")).toBe("dark");
+		expect(
+			dom.window.document.head.querySelector("style#app-theme")?.textContent,
+		).toContain("#0f172a");
+		expect(updateTerminalsSpy).toHaveBeenLastCalledWith("theme", "ocean");
+		expect(setEditorThemeSpy).toHaveBeenLastCalledWith("ace/theme/one_dark");
+
+		// Second change after startup must still update terminal with fallback dark theme
+		await themesMod.apply("crimson", true);
+		expect(
+			dom.window.document.head.querySelector("style#app-theme")?.textContent,
+		).toContain("#2a0a12");
+		expect(settingsState.terminalSettings.theme).toBe("dark");
+		expect(updateTerminalsSpy).toHaveBeenLastCalledWith("theme", "dark");
+		expect(setEditorThemeSpy).toHaveBeenLastCalledWith("ace/theme/monokai");
+
+		// Third change to a light theme flips body attribute, CSS vars, editor & terminal
+		await themesMod.apply("mint", true);
+		expect(dom.window.document.body.getAttribute("theme-type")).toBe("light");
+		expect(
+			dom.window.document.head.querySelector("style#app-theme")?.textContent,
+		).toContain("#ecfdf5");
+		expect(settingsState.terminalSettings.theme).toBe("light");
+		expect(updateTerminalsSpy).toHaveBeenLastCalledWith("theme", "light");
+		expect(setEditorThemeSpy).toHaveBeenLastCalledWith("ace/theme/chrome");
+		expect(setUiThemeSpy).toHaveBeenCalledTimes(3);
+		expect(themeChangeEvents).toEqual(["ocean", "crimson", "mint"]);
+	}, 30000);
 });

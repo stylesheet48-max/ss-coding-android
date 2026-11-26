@@ -22,7 +22,7 @@
   overflow: auto;
   z-index: 9999;
   border-radius: var(--ss-radius-pill, 999px);
-  margin-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  margin-bottom: calc(var(--ss-nav-height, 52px) + 8px + env(safe-area-inset-bottom, 0px));
   pointer-events: none;
   will-change: transform, opacity;
 

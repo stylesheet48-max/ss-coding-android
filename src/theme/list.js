@@ -108,7 +108,11 @@ export async function apply(id, init) {
 
 	if (init && theme.preferredEditorTheme) {
 		update.editorTheme = theme.preferredEditorTheme;
-		if (editorManager != null && editorManager.editor != null) {
+		if (
+			typeof editorManager !== "undefined" &&
+			editorManager != null &&
+			editorManager.editor != null
+		) {
 			editorManager.editor.setTheme(theme.preferredEditorTheme);
 		}
 	}
@@ -118,19 +122,20 @@ export async function apply(id, init) {
 		fonts.setFont(theme.preferredFont);
 	}
 
-	if (init && firstTime && theme.preferredTerminalTheme) {
+	const terminalTheme =
+		theme.preferredTerminalTheme || (theme.type === "dark" ? "dark" : "light");
+
+	if (init) {
 		update.terminalSettings = {
 			...(settings.value.terminalSettings || {}),
-			theme: theme.preferredTerminalTheme,
+			theme: terminalTheme,
 		};
 	}
 
 	settings.update(update, false);
 
-	if (init && firstTime && theme.preferredTerminalTheme) {
-		if (editorManager != null) {
-			updateActiveTerminals("theme", theme.preferredTerminalTheme);
-		}
+	if (init && typeof editorManager !== "undefined" && editorManager != null) {
+		updateActiveTerminals("theme", terminalTheme);
 	}
 
 	localStorage.__primary_color = theme.primaryColor;
@@ -141,12 +146,24 @@ export async function apply(id, init) {
 	const primaryColor = color(theme.primaryColor).hex.toString();
 	const scheme = theme.toJSON("hex");
 	// Set status bar and navigation bar color
-	system.setUiTheme(primaryColor, scheme);
+	if (typeof system !== "undefined" && system?.setUiTheme) {
+		system.setUiTheme(primaryColor, scheme);
+	}
+
+	if (typeof window !== "undefined") {
+		window.dispatchEvent(
+			new CustomEvent("ss-theme-change", {
+				detail: { id, theme },
+			}),
+		);
+	}
 
 	if (firstTime) {
 		// To make sure system bars are updated
 		setTimeout(() => {
-			system.setUiTheme(primaryColor, scheme);
+			if (typeof system !== "undefined" && system?.setUiTheme) {
+				system.setUiTheme(primaryColor, scheme);
+			}
 		}, 1000);
 		firstTime = false;
 	}

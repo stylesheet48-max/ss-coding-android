@@ -475,33 +475,33 @@ wc-page {
 
   &#root[data-ss-nav="visible"] {
     > main {
-      height: calc(100vh - 48px - 70px);
-      min-height: calc(100vh - 48px - 70px);
+      height: calc(100vh - 48px - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
+      min-height: calc(100vh - 48px - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
     }
 
     &.top-bar > main {
-      height: calc(100vh - 78px - 70px);
-      min-height: calc(100vh - 78px - 70px);
+      height: calc(100vh - 78px - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
+      min-height: calc(100vh - 78px - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
     }
 
     &[data-ss-statusbar="visible"] {
       > main {
-        height: calc(100vh - 48px - var(--ss-statusbar-height, 26px) - 70px);
-        min-height: calc(100vh - 48px - var(--ss-statusbar-height, 26px) - 70px);
+        height: calc(100vh - 48px - var(--ss-statusbar-height, 26px) - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
+        min-height: calc(100vh - 48px - var(--ss-statusbar-height, 26px) - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
       }
 
       &.top-bar > main {
-        height: calc(100vh - 78px - var(--ss-statusbar-height, 26px) - 70px);
-        min-height: calc(100vh - 78px - var(--ss-statusbar-height, 26px) - 70px);
+        height: calc(100vh - 78px - var(--ss-statusbar-height, 26px) - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
+        min-height: calc(100vh - 78px - var(--ss-statusbar-height, 26px) - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
       }
     }
 
     #ss-status-bar {
-      margin-bottom: 70px;
+      margin-bottom: calc(var(--ss-nav-height, 52px) + env(safe-area-inset-bottom, 0px));
     }
 
     #quicktools-toggler {
-      bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+      bottom: calc(var(--ss-nav-height, 52px) + 8px + env(safe-area-inset-bottom, 0px));
     }
   }
 }

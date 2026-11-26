@@ -20,7 +20,7 @@ body.no-animation {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--ss-surface-glass-strong, rgba(247, 250, 255, 0.94));
+  background: var(--ss-surface-glass-strong);
   -webkit-backdrop-filter: blur(var(--ss-blur-lg, 22px));
   backdrop-filter: blur(var(--ss-blur-lg, 22px));
   border-right: 1px solid var(--ss-border-glass);
@@ -97,8 +97,9 @@ body.no-animation {
     height: 34px;
     border-radius: 10px;
     padding: 3px;
-    background: #ffffff;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.16);
+    background: var(--ss-surface-card);
+    border: 1px solid var(--ss-border-subtle);
+    box-shadow: var(--ss-shadow-sm);
     flex-shrink: 0;
     object-fit: cover;
   }
@@ -211,9 +212,9 @@ body.no-animation {
 
     &.active {
       background: var(--ss-accent-soft);
-      border-color: rgba(37, 99, 235, 0.22);
+      border-color: color-mix(in srgb, var(--active-color, #2563eb) 28%, transparent);
       color: var(--ss-accent);
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--active-color, #2563eb) 14%, transparent);
     }
 
     body.has-unread-notifications &[data-nav-id="notification"]::after {
@@ -516,7 +517,7 @@ body.no-animation {
 
     &:focus {
       border-color: var(--ss-accent) !important;
-      background: #ffffff;
+      background: var(--ss-surface-card);
       box-shadow: 0 0 0 3px var(--ss-accent-soft);
     }
 

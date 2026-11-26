@@ -25,7 +25,7 @@ export default function createWorkspaceNav({ onOpenHome } = {}) {
 	const $nav = (
 		<nav
 			id="ss-workspace-nav"
-			className="ss-glass-pill"
+			className="ss-bottom-nav"
 			aria-label="Workspace navigation"
 		>
 			{items.map((item) => {
