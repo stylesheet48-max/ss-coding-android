@@ -1,4 +1,3 @@
-import "./WorkspaceNav.scss";
 import Sidebar from "components/sidebar";
 
 /**

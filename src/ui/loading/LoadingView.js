@@ -1,5 +1,3 @@
-import "./LoadingView.scss";
-
 /**
  * Creates a real-operation loading indicator or an actionable error/retry view.
  */

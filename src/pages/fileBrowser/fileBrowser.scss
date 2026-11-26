@@ -18,9 +18,7 @@
 
   .tile {
     &[data-storage-type="notification"] {
-      background-color: rgb(153, 153, 255);
-      background-color: var(--primary-color);
-      color: rgb(255, 255, 255);
+      background: var(--ss-surface-glass, var(--primary-color));
       color: var(--primary-text-color);
       height: 40px;
       text-align: center;

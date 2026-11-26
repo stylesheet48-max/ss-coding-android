@@ -190,7 +190,6 @@
 
     li {
       &.selected span {
-        color: rgb(169, 0, 0) !important;
         color: var(--popup-active-color) !important;
       }
 
@@ -417,7 +416,6 @@
       .loader {
         width: 24px;
         height: 24px;
-        color: rgb(153, 153, 255);
         color: var(--popup-active-color);
         display: flex;
         flex-shrink: 0;
@@ -510,19 +508,24 @@
   }
 
   .button-container {
-    margin-top: 20px;
-    padding: 0 8px 8px;
-    gap: 4px;
+    margin-top: 16px;
+    padding: 0 12px 12px;
+    gap: 8px;
     box-sizing: border-box;
 
     > button {
       min-height: 40px;
-      border-radius: 6px;
+      border-radius: 10px;
       text-transform: capitalize;
-      font-weight: 500;
+      font-weight: 600;
+      background: var(--ss-surface-glass-subtle, var(--secondary-color));
+      border: 1px solid var(--ss-border-glass, var(--border-color));
+      color: var(--popup-text-color);
 
       &:last-child {
-        font-weight: 600;
+        background: var(--ss-accent-gradient, var(--button-background-color));
+        color: var(--button-text-color, #ffffff);
+        border-color: transparent;
       }
     }
   }

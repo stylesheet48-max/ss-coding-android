@@ -1,7 +1,8 @@
 // SS Coding — Centralized Glassmorphism Design Tokens
 // Light-mode-first token system with adaptive dark theme support.
 
-:root {
+:root,
+:host {
   // Typography
   --ss-font-sans: "Inter", "Roboto", system-ui, -apple-system, sans-serif;
   --ss-font-mono: "Roboto Mono", "Fira Code", monospace;
@@ -78,7 +79,8 @@
   --ss-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-body[theme-type="dark"] {
+body[theme-type="dark"],
+:host-context(body[theme-type="dark"]) {
   --ss-bg-canvas: linear-gradient(155deg, #161b26 0%, #1d2433 55%, #161d29 100%);
   --ss-bg-solid: #181e2a;
   --ss-surface-glass: rgba(28, 35, 49, 0.80);

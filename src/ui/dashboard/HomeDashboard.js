@@ -1,6 +1,6 @@
-import "./HomeDashboard.scss";
 import fsOperation from "fileSystem";
 import { getResolvedKeyBindings } from "cm/commandRegistry";
+import logoSrc from "components/logo/logo.png?inline";
 import Sidebar from "components/sidebar";
 import toast from "components/toast";
 import prompt from "dialogs/prompt";
@@ -222,9 +222,9 @@ export default function HomeDashboard() {
 				<div className="ss-hero-top">
 					<img
 						className="ss-hero-logo"
-						src="./logo.svg"
-						width="56"
-						height="56"
+						src={logoSrc}
+						width="54"
+						height="54"
 						alt="SS Coding"
 					/>
 					<div className="ss-hero-text">

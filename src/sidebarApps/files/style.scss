@@ -1,14 +1,78 @@
 .container.files {
-  &:empty {
-    height: 100%;
-    width: 100%;
+  position: relative;
+
+  .ss-files-empty {
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 100%;
+    width: 100%;
+    padding: 16px;
+    box-sizing: border-box;
 
-    &::after {
-      content: attr(data-msg);
-      font-weight: 600;
+    &[hidden] {
+      display: none !important;
+    }
+
+    .ss-files-empty-card {
+      width: 100%;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
+      box-sizing: border-box;
+      background: var(--ss-surface-card);
+    }
+
+    .ss-files-empty-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ss-accent-soft);
+      color: var(--ss-accent);
+      font-size: 1.4rem;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--ss-text-primary);
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: var(--ss-text-secondary);
+    }
+
+    .ss-files-empty-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      margin-top: 4px;
+
+      > button {
+        width: 100%;
+        min-height: 38px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+      }
+
+      .icon {
+        width: auto;
+        height: auto;
+        font-size: 1rem;
+        line-height: 1;
+        background: transparent !important;
+      }
     }
   }
 

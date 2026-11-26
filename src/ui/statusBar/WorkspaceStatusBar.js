@@ -1,4 +1,3 @@
-import "./WorkspaceStatusBar.scss";
 import { hasConnectedServers } from "cm/lsp/connectionState";
 import { getEncoding } from "utils/encodings";
 

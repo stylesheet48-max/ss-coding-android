@@ -1,5 +1,6 @@
 import "./style.scss";
 import fsOperation from "fileSystem";
+import logoSrc from "components/logo/logo.png?inline";
 import toast from "components/toast";
 import confirm from "dialogs/confirm";
 import loader from "dialogs/loader";
@@ -43,6 +44,83 @@ function create($container, $toggler) {
 	const resizeBar = Ref();
 	const userAvatar = Ref();
 	const userContextMenu = Ref();
+	const drawerNav = Ref();
+	const appIconsContainer = Ref();
+	const appsBar = Ref();
+
+	const BUILTIN_APP_IDS = new Set([
+		"files",
+		"searchInFiles",
+		"extensions",
+		"notification",
+	]);
+
+	const DRAWER_NAV_ITEMS = [
+		{ id: "home", icon: "home", label: "Home", type: "command" },
+		{ id: "files", icon: "folder", label: "Files", type: "sidebar" },
+		{ id: "searchInFiles", icon: "search", label: "Search", type: "sidebar" },
+		{ id: "editor", icon: "code", label: "Editor", type: "command" },
+		{ id: "terminal", icon: "terminal", label: "Terminal", type: "command" },
+		{ id: "extensions", icon: "extension", label: "Plugins", type: "sidebar" },
+		{
+			id: "notification",
+			icon: "notifications",
+			label: "Alerts",
+			type: "sidebar",
+		},
+		{ id: "settings", icon: "settings", label: "Settings", type: "command" },
+	];
+
+	function handleDrawerNavSelect(item) {
+		if (item.type === "sidebar") {
+			const $appIcon = appIconsContainer.el?.querySelector(
+				`[data-action="sidebar-app"][data-id="${item.id}"]`,
+			);
+			$appIcon?.click();
+			syncDrawerNavState();
+			return;
+		}
+
+		if (mode === "phone") hide();
+
+		switch (item.id) {
+			case "home":
+				acode.exec("open-home");
+				break;
+			case "editor": {
+				const files = window.editorManager?.files || [];
+				const targetFile =
+					files.find((f) => f.type === "editor") ||
+					files.find((f) => f.id !== "welcome-tab");
+				if (targetFile) targetFile.makeActive();
+				else acode.exec("new-file");
+				break;
+			}
+			case "terminal":
+				acode.exec("new-terminal");
+				break;
+			case "settings":
+				acode.exec("open", "settings");
+				break;
+			default:
+				break;
+		}
+	}
+
+	function syncDrawerNavState() {
+		const activeApp = appIconsContainer.el?.querySelector(".icon.active");
+		const activeId = activeApp?.dataset?.id || "files";
+		const buttons = drawerNav.el?.querySelectorAll(".ss-drawer-nav-item") || [];
+		for (const btn of buttons) {
+			const isActive = btn.dataset.navId === activeId;
+			btn.classList.toggle("active", isActive);
+			btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+		}
+		const hasExtraApps = Array.from(appIconsContainer.el?.children || []).some(
+			(node) => !BUILTIN_APP_IDS.has(node.dataset?.id),
+		);
+		appsBar.el?.classList.toggle("has-extra-apps", hasExtraApps);
+	}
 
 	$container = $container || app;
 	let mode = innerWidth > 750 ? "tab" : "phone";
@@ -50,18 +128,72 @@ function create($container, $toggler) {
 
 	const eventOptions = { passive: false };
 	const $el = (
-		<div id="sidebar" className={mode}>
-			<div className="apps">
-				<div className="app-icons-container"></div>
-				<div
-					ref={userAvatar}
-					className="user-icon-container"
+		<div id="sidebar" className={`${mode} ss-glass-drawer`}>
+			<div className="ss-drawer-header">
+				<div className="ss-drawer-brand">
+					<img
+						className="ss-drawer-logo"
+						src={logoSrc}
+						width="34"
+						height="34"
+						alt="SS Coding"
+					/>
+					<div className="ss-drawer-brand-text">
+						<span className="ss-drawer-title">SS Coding</span>
+						<span className="ss-drawer-subtitle">Workspace</span>
+					</div>
+				</div>
+				<button
+					type="button"
+					className="ss-drawer-close"
+					aria-label="Close navigation"
+					onclick={() => hide(true)}
+				>
+					<span className="icon clearclose" aria-hidden="true" />
+				</button>
+			</div>
+
+			<nav
+				ref={drawerNav}
+				className="ss-drawer-nav"
+				aria-label="Workspace drawer navigation"
+			>
+				{DRAWER_NAV_ITEMS.map((item) => (
+					<button
+						type="button"
+						className={`ss-drawer-nav-item${item.id === "files" ? " active" : ""}`}
+						data-nav-id={item.id}
+						aria-label={item.label}
+						onclick={() => handleDrawerNavSelect(item)}
+					>
+						<span className={`icon ${item.icon}`} aria-hidden="true" />
+						<span className="ss-drawer-nav-label">{item.label}</span>
+					</button>
+				))}
+			</nav>
+
+			<div ref={appsBar} className="apps">
+				<div ref={appIconsContainer} className="app-icons-container"></div>
+			</div>
+
+			<div className="container"></div>
+
+			<div className="ss-drawer-footer">
+				<button
+					type="button"
+					className="ss-drawer-account-btn"
 					onclick={handleUserIconClick}
 				>
-					<span className="icon account_circle"></span>
-				</div>
+					<span ref={userAvatar} className="user-icon-container">
+						<span className="icon account_circle"></span>
+					</span>
+					<span className="ss-account-label">Account</span>
+				</button>
+				<span className="ss-drawer-version">
+					v{window.BuildInfo?.version || "1.13.5"}
+				</span>
 			</div>
-			<div className="container"></div>
+
 			<div
 				className="resize-bar w-resize"
 				onmousedown={onresize}
@@ -73,7 +205,6 @@ function create($container, $toggler) {
 					<div className="user-menu-name"></div>
 					<div className="user-menu-email"></div>
 				</div>
-				{/* <div className="user-menu-separator"></div> */}
 				<div className="user-menu-item" onclick={handleLogout}>
 					<span className="icon logout"></span>
 					{strings.logout}
@@ -81,6 +212,18 @@ function create($container, $toggler) {
 			</div>
 		</div>
 	);
+	if (typeof MutationObserver !== "undefined") {
+		queueMicrotask(() => {
+			if (!appIconsContainer.el) return;
+			new MutationObserver(syncDrawerNavState).observe(appIconsContainer.el, {
+				childList: true,
+				subtree: true,
+				attributes: true,
+				attributeFilter: ["class"],
+			});
+			syncDrawerNavState();
+		});
+	}
 	const mask = <span className="mask" onclick={hide}></span>;
 	const touch = {
 		startX: 0,
@@ -668,8 +811,8 @@ function create($container, $toggler) {
 	$el.toggle = toggle;
 	$el.onshow = () => {};
 	$el.getWidth = function () {
-		const width = innerWidth * 0.7;
-		return mode === "phone" ? (width >= 350 ? 350 : width) : MIN_WIDTH;
+		const phoneWidth = Math.min(Math.round(innerWidth * 0.88), 356);
+		return mode === "phone" ? phoneWidth : Math.max(width, 280);
 	};
 
 	return $el;

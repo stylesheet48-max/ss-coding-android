@@ -7,6 +7,8 @@ import selection from "./selection";
 
 /**@type {HTMLElement} */
 let container;
+/**@type {HTMLElement} */
+let emptyState;
 
 export default [
 	"documents", // icon
@@ -17,6 +19,57 @@ export default [
 	onSelected, // onSelected function
 ];
 
+function createEmptyState() {
+	return (
+		<section
+			className="ss-files-empty"
+			aria-label="Workspace files empty state"
+		>
+			<div className="ss-files-empty-card ss-glass-card">
+				<div className="ss-files-empty-icon">
+					<span className="icon folder_open" aria-hidden="true" />
+				</div>
+				<h3>No Folder Opened</h3>
+				<p>
+					Open a project folder from device storage or start a new buffer to
+					explore your workspace.
+				</p>
+				<div className="ss-files-empty-actions">
+					<button
+						type="button"
+						className="ss-btn-primary"
+						onclick={(e) => {
+							e.stopPropagation();
+							acode.exec("open-folder");
+						}}
+					>
+						<span className="icon folder_open" aria-hidden="true" />
+						<span>{strings["open folder"] || "Open Folder"}</span>
+					</button>
+					<button
+						type="button"
+						className="ss-btn-glass"
+						onclick={(e) => {
+							e.stopPropagation();
+							acode.exec("new-file");
+							Sidebar.hide();
+						}}
+					>
+						<span className="icon add" aria-hidden="true" />
+						<span>{strings["new file"] || "New File"}</span>
+					</button>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+function syncEmptyState() {
+	if (!container || !emptyState) return;
+	const hasContent = !!container.querySelector(":scope > div");
+	emptyState.hidden = hasContent;
+}
+
 /**
  * Initialize files app
  * @param {HTMLElement} el
@@ -24,8 +77,11 @@ export default [
 function initApp(el) {
 	container = el;
 	container.classList.add("files");
-	container.setAttribute("data-msg", strings["open folder"]);
+	container.removeAttribute("data-msg");
 	container.style.overflowX = "auto";
+	emptyState = createEmptyState();
+	container.append(emptyState);
+	syncEmptyState();
 	container.addEventListener("click", clickHandler);
 	// Drag listens first so a long press can become a drag before selection
 	// or the context menu sees it.
@@ -41,9 +97,19 @@ function initApp(el) {
 				return;
 			const fileList = container.get(":scope > div.file-list");
 			if (fileList) fixHeight(fileList);
+			syncEmptyState();
 		},
 	);
-	editorManager.on("add-folder", fixHeight);
+	editorManager.on("add-folder", () => {
+		fixHeight();
+		syncEmptyState();
+	});
+	editorManager.on("remove-folder", syncEmptyState);
+	if (typeof MutationObserver !== "undefined") {
+		new MutationObserver(syncEmptyState).observe(container, {
+			childList: true,
+		});
+	}
 	Sidebar.on("show", onSelected);
 }
 
@@ -56,6 +122,7 @@ function onSelected(el) {
 	// icon updates cannot reach them until this view is shown again.
 	fileIcons.refreshRenderedIcons(container);
 	selection.syncBar();
+	syncEmptyState();
 	// Heights measured while the sidebar was detached come out wrong.
 	const $openFolder = container.querySelector(
 		":scope > .list:not(.hidden):not(.file-list)",
@@ -73,8 +140,7 @@ function onSelected(el) {
  * @returns
  */
 function clickHandler(e) {
-	if (!container.children.length) {
-		acode.exec("open-folder");
+	if (!container.querySelector(":scope > div")) {
 		return;
 	}
 
