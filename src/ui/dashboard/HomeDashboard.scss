@@ -5,7 +5,7 @@
   min-height: 100%;
   height: auto;
   width: 100%;
-  padding: 16px 14px 72px;
+  padding: 16px 14px 28px;
   box-sizing: border-box;
   overflow-y: auto;
   overflow-x: hidden;
@@ -422,7 +422,7 @@
 
 @media (min-width: 680px) {
   #welcome-tab.ss-dashboard {
-    padding: 24px 24px 76px;
+    padding: 24px 24px 32px;
 
     .ss-action-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));

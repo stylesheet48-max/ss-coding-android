@@ -717,7 +717,7 @@ async function loadApp() {
 		$floatingNavToggler,
 		$headerToggler,
 	);
-	workspaceNav.mount(root);
+	workspaceNav.mount(document.body);
 	workspaceStatusBar.bind(editorManager);
 	workspaceNav.syncActiveFromEditor();
 	//#endregion

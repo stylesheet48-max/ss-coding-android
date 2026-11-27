@@ -83,6 +83,7 @@ function syncEmptyState() {
 	if (!container || !emptyState) return;
 	const hasContent = !!container.querySelector(":scope > div");
 	emptyState.hidden = hasContent;
+	container.classList.toggle("is-empty", !hasContent);
 }
 
 /**

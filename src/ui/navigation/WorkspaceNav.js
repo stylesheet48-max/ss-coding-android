@@ -9,6 +9,7 @@ import Sidebar from "components/sidebar";
 export default function createWorkspaceNav({ onOpenHome } = {}) {
 	let activeTab = "home";
 	let baselineHeight = window.innerHeight;
+	let lastWidth = window.innerWidth;
 	let keyboardLikelyOpen = false;
 
 	const items = [
@@ -73,10 +74,14 @@ export default function createWorkspaceNav({ onOpenHome } = {}) {
 	}
 
 	function handleViewportChange() {
+		const currentWidth = window.innerWidth;
 		const currentHeight = window.visualViewport
 			? window.visualViewport.height
 			: window.innerHeight;
-		if (currentHeight > baselineHeight) {
+		if (Math.abs(currentWidth - lastWidth) > 40) {
+			lastWidth = currentWidth;
+			baselineHeight = currentHeight;
+		} else if (currentHeight > baselineHeight) {
 			baselineHeight = currentHeight;
 		}
 		keyboardLikelyOpen = baselineHeight - currentHeight > 140;
@@ -201,7 +206,7 @@ export default function createWorkspaceNav({ onOpenHome } = {}) {
 		setActive,
 		syncVisibility,
 		syncActiveFromEditor,
-		mount(parent = window.root) {
+		mount(parent = document.body) {
 			if (!parent) return;
 			if (typeof parent.appendOuter === "function") {
 				parent.appendOuter($nav);

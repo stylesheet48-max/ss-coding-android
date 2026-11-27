@@ -465,7 +465,11 @@ function create($container, $toggler) {
 					$el.style.transform = null;
 					$el.classList.remove("show");
 					mask.remove();
-					document.ontouchstart = null;
+					document.removeEventListener(
+						"touchstart",
+						ontouchstart,
+						eventOptions,
+					);
 					resetState();
 					$container.style.overflow = null;
 					onhide();
@@ -474,6 +478,7 @@ function create($container, $toggler) {
 				} else {
 					root.style.removeProperty("margin-left");
 					root.style.removeProperty("width");
+					document.documentElement.style.removeProperty("--ss-sidebar-offset");
 					$el.style.maxWidth = null;
 					$el.style.transition = null;
 				}
@@ -520,11 +525,13 @@ function create($container, $toggler) {
 
 		if (mode === "phone") {
 			resizeBar.style.display = "none";
+			document.documentElement.style.removeProperty("--ss-sidebar-offset");
 			$el.onshow();
 			app.append($el, mask);
 			$el.classList.add("show");
-			document.ontouchstart = ontouchstart;
+			document.addEventListener("touchstart", ontouchstart, eventOptions);
 
+			actionStack.remove("sidebar");
 			actionStack.push({
 				id: "sidebar",
 				action: hideMaster,
@@ -550,6 +557,7 @@ function create($container, $toggler) {
 			$el.activated = false;
 			root.style.removeProperty("margin-left");
 			root.style.removeProperty("width");
+			document.documentElement.style.removeProperty("--ss-sidebar-offset");
 			$el.style.maxWidth = null;
 			$el.style.transition = null;
 			$el.remove();
@@ -559,6 +567,8 @@ function create($container, $toggler) {
 	}
 
 	function hideMaster() {
+		localStorage.sidebarShown = 0;
+		$el.style.transition = null;
 		$el.style.transform = null;
 		$el.classList.remove("show");
 		wasOpenInTab = false;
@@ -570,7 +580,7 @@ function create($container, $toggler) {
 			$container.style.overflow = null;
 			onhide();
 		}, 300);
-		document.ontouchstart = null;
+		document.removeEventListener("touchstart", ontouchstart, eventOptions);
 		resetState();
 
 		openedFolders.map(($) => ($.onscroll = null));
@@ -729,7 +739,10 @@ function create($container, $toggler) {
 	 */
 	function ontouchend(e) {
 		if (e.target !== mask && touch.totalX === 0) return resetState();
-		else if (e.target === mask && touch.totalX === 0) return hide();
+		if (e.target === mask && Math.abs(touch.totalX) < 12) {
+			e.preventDefault();
+			return hide();
+		}
 		e.preventDefault();
 
 		const threshold = $el.getWidth() / 3;
@@ -785,6 +798,10 @@ function create($container, $toggler) {
 		$el.style.maxWidth = width + "px";
 		root.style.marginLeft = width + "px";
 		root.style.width = `calc(100% - ${width}px)`;
+		document.documentElement.style.setProperty(
+			"--ss-sidebar-offset",
+			`${width}px`,
+		);
 		clearTimeout(setWidthTimeout);
 		setWidthTimeout = setTimeout(() => {
 			const editor = editorManager?.editor;
@@ -811,7 +828,7 @@ function create($container, $toggler) {
 	$el.toggle = toggle;
 	$el.onshow = () => {};
 	$el.getWidth = function () {
-		const phoneWidth = Math.min(Math.round(innerWidth * 0.88), 356);
+		const phoneWidth = Math.min(Math.round(innerWidth * 0.82), 420);
 		return mode === "phone" ? phoneWidth : Math.max(width, 280);
 	};
 

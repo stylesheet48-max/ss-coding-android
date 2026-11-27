@@ -45,6 +45,8 @@ body {
         }
 
         &.top-bar {
+          padding-top: 30px;
+
           #sidebar-toggler {
             top: 0;
             left: 0;
@@ -372,14 +374,15 @@ wc-page {
   footer {
     position: fixed;
     bottom: 0;
-    left: 0;
-    width: 100%;
+    left: var(--ss-sidebar-offset, 0px);
+    right: 0;
+    width: auto;
     z-index: 98;
     background: var(--ss-surface-glass-strong, var(--primary-color));
     -webkit-backdrop-filter: blur(var(--ss-blur-md, 14px));
     backdrop-filter: blur(var(--ss-blur-md, 14px));
     border-top: 1px solid var(--ss-border-glass, var(--border-color));
-    padding: 0 2px;
+    padding: 0 2px env(safe-area-inset-bottom, 0px);
     box-sizing: border-box;
     box-shadow: 0 -6px 20px var(--box-shadow-color);
 
@@ -460,48 +463,44 @@ wc-page {
     height: 100%;
   }
 
-  // Reserve clean vertical room for SS Coding status bar & floating bottom workspace nav
-  &#root[data-ss-statusbar="visible"] {
+  // Keep #root untransformed and flex-laid-out so position: fixed bars anchor
+  // to the real WebView viewport and <main> fills the exact remaining height.
+  &#root {
+    transform: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+
+    > header {
+      flex: 0 0 auto;
+    }
+
     > main {
-      height: calc(100vh - 48px - var(--ss-statusbar-height, 26px));
-      min-height: calc(100vh - 48px - var(--ss-statusbar-height, 26px));
+      flex: 1 1 0;
+      min-height: 0 !important;
+      height: auto !important;
+      width: 100%;
     }
 
-    &.top-bar > main {
-      height: calc(100vh - 78px - var(--ss-statusbar-height, 26px));
-      min-height: calc(100vh - 78px - var(--ss-statusbar-height, 26px));
-    }
-  }
+    &[data-ss-nav="visible"] {
+      padding-bottom: calc(var(--ss-nav-height, 52px) + env(safe-area-inset-bottom, 0px));
 
-  &#root[data-ss-nav="visible"] {
-    > main {
-      height: calc(100vh - 48px - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
-      min-height: calc(100vh - 48px - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
-    }
-
-    &.top-bar > main {
-      height: calc(100vh - 78px - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
-      min-height: calc(100vh - 78px - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
-    }
-
-    &[data-ss-statusbar="visible"] {
-      > main {
-        height: calc(100vh - 48px - var(--ss-statusbar-height, 26px) - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
-        min-height: calc(100vh - 48px - var(--ss-statusbar-height, 26px) - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
-      }
-
-      &.top-bar > main {
-        height: calc(100vh - 78px - var(--ss-statusbar-height, 26px) - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
-        min-height: calc(100vh - 78px - var(--ss-statusbar-height, 26px) - var(--ss-nav-height, 52px) - env(safe-area-inset-bottom, 0px));
+      #quicktools-toggler {
+        bottom: calc(var(--ss-nav-height, 52px) + 8px + env(safe-area-inset-bottom, 0px));
       }
     }
 
-    #ss-status-bar {
-      margin-bottom: calc(var(--ss-nav-height, 52px) + env(safe-area-inset-bottom, 0px));
+    &[footer-height="1"] {
+      padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
     }
 
-    #quicktools-toggler {
-      bottom: calc(var(--ss-nav-height, 52px) + 8px + env(safe-area-inset-bottom, 0px));
+    &[footer-height="2"] {
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    }
+
+    &[footer-height="3"] {
+      padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
     }
   }
 }

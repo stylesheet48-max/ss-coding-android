@@ -1,16 +1,18 @@
 #ss-workspace-nav {
   position: fixed;
-  left: 0;
+  left: var(--ss-sidebar-offset, 0px);
   right: 0;
-  bottom: env(safe-area-inset-bottom, 0px);
+  bottom: 0;
   z-index: 95;
   display: flex;
   align-items: center;
   justify-content: space-around;
   gap: 2px;
-  width: 100%;
-  height: var(--ss-nav-height, 52px);
-  padding: 4px 8px;
+  width: auto;
+  min-height: var(--ss-nav-height, 52px);
+  height: calc(var(--ss-nav-height, 52px) + env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
   background: var(--ss-surface-glass-strong, var(--primary-color));
   background: color-mix(in srgb, var(--primary-color) 94%, transparent);
@@ -20,6 +22,7 @@
   box-shadow: 0 -2px 12px var(--box-shadow-color, rgba(15, 23, 42, 0.08));
   color: var(--primary-text-color);
   border-radius: 0;
+  transform: translate3d(0, 0, 0);
   transition:
     transform var(--ss-duration-base) var(--ss-ease-out),
     opacity var(--ss-duration-fast) var(--ss-ease-out),
@@ -87,8 +90,8 @@
 
 @media (max-width: 360px) {
   #ss-workspace-nav {
-    width: 100%;
-    padding: 4px;
+    width: auto;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
 
     .ss-nav-item .ss-nav-label {
       font-size: 0.6rem;

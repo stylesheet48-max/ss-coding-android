@@ -207,6 +207,16 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 		const toggler = dom.window.document.createElement("span");
 		const execSpy = vi.fn();
 
+		const actionStackEntries = [];
+		const actionStackMock = {
+			push: vi.fn((entry) => actionStackEntries.push(entry)),
+			remove: vi.fn((id) => {
+				for (let i = actionStackEntries.length - 1; i >= 0; i--) {
+					if (actionStackEntries[i].id === id) actionStackEntries.splice(i, 1);
+				}
+			}),
+		};
+
 		const sidebarMod = compileJsxFile(
 			"src/components/sidebar/index.js",
 			{
@@ -217,7 +227,7 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 				"dialogs/confirm": vi.fn(),
 				"dialogs/loader": { create: vi.fn(), show: vi.fn(), destroy: vi.fn() },
 				"html-tag-js/ref": Ref,
-				"lib/actionStack": { push: vi.fn(), remove: vi.fn() },
+				"lib/actionStack": actionStackMock,
 				"lib/auth": {
 					loginEvents: { addListener: vi.fn() },
 					getLoggedInUser: vi.fn(async () => null),
@@ -241,6 +251,8 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 				localStorage: dom.window.localStorage,
 				window: dom.window,
 				document: dom.window.document,
+				HTMLInputElement: dom.window.HTMLInputElement,
+				HTMLTextAreaElement: dom.window.HTMLTextAreaElement,
 				MutationObserver: dom.window.MutationObserver,
 				setTimeout,
 				clearTimeout,
@@ -276,13 +288,44 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 			"settings",
 		]);
 
-		// Test repeated open/close toggling on 360px phone screen
+		// Drawer width matches responsive 82% viewport rule capped at 420px
+		expect($sidebar.getWidth()).toBe(Math.round(360 * 0.82));
+
+		// Test close via close button, overlay mask, and back navigation
 		$sidebar.show();
 		expect($sidebar.activated).toBe(true);
 		expect($sidebar.classList.contains("show")).toBe(true);
 		expect($sidebar.isConnected).toBe(true);
 
-		$sidebar.hide();
+		$sidebar.querySelector(".ss-drawer-close").click();
+		expect($sidebar.classList.contains("show")).toBe(false);
+
+		$sidebar.show();
+		expect($sidebar.classList.contains("show")).toBe(true);
+		appRoot.querySelector(".mask").click();
+		expect($sidebar.classList.contains("show")).toBe(false);
+
+		// Verify touch tap with minor jitter on overlay mask also closes drawer
+		$sidebar.show();
+		expect($sidebar.classList.contains("show")).toBe(true);
+		const maskEl = appRoot.querySelector(".mask");
+		const mkTouchEvent = (type, clientX) => {
+			const ev = new dom.window.Event(type, {
+				bubbles: true,
+				cancelable: true,
+			});
+			ev.touches = [{ clientX, clientY: 200 }];
+			return ev;
+		};
+		maskEl.dispatchEvent(mkTouchEvent("touchstart", 330));
+		maskEl.dispatchEvent(mkTouchEvent("touchmove", 332));
+		maskEl.dispatchEvent(mkTouchEvent("touchend", 332));
+		expect($sidebar.classList.contains("show")).toBe(false);
+
+		$sidebar.show();
+		expect(actionStackEntries.some((e) => e.id === "sidebar")).toBe(true);
+		const sidebarBackEntry = actionStackEntries.find((e) => e.id === "sidebar");
+		sidebarBackEntry.action();
 		expect($sidebar.classList.contains("show")).toBe(false);
 
 		$sidebar.show();
@@ -294,7 +337,7 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 		expect(execSpy).toHaveBeenCalledWith("open", "settings");
 		expect($sidebar.classList.contains("show")).toBe(false);
 
-		// Verify empty state in files sidebar app (zero blank panel!)
+		// Verify empty state in files sidebar app (zero blank panel + .is-empty class!)
 		const filesMod = compileJsxFile(
 			"src/sidebarApps/files/index.js",
 			{
@@ -326,10 +369,11 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 		const emptySection = filesContainer.querySelector("section.ss-files-empty");
 		expect(emptySection).toBeTruthy();
 		expect(emptySection.hidden).toBe(false);
+		expect(filesContainer.classList.contains("is-empty")).toBe(true);
 		expect(emptySection.querySelectorAll("button").length).toBe(2);
 	}, 30000);
 
-	it("uses reactive theme CSS variables everywhere and docks #ss-workspace-nav flush at bottom", () => {
+	it("uses reactive theme CSS variables, fixes drawer sizing, and docks #ss-workspace-nav flush at bottom", () => {
 		const compiled = sass.compile(path.join(REPO_ROOT, "src/main.scss"), {
 			loadPaths: [path.join(REPO_ROOT, "src")],
 		}).css;
@@ -342,17 +386,45 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 		expect(compiled).toContain("color-mix(in srgb, var(--secondary-color");
 		expect(compiled).not.toContain('body[theme-type="dark"]');
 
-		// Bottom navigation docked flush above system nav bar (no floating 8px bottom gap or 70px reservation)
+		// Drawer uses 82vw responsive width with 420px cap, viewport-bounded height, and pinned footer
+		const sidebarCompiled = sass.compile(
+			path.join(REPO_ROOT, "src/components/sidebar/style.scss"),
+			{ loadPaths: [path.join(REPO_ROOT, "src")] },
+		).css;
+		const sidebarMatch = sidebarCompiled.match(/^#sidebar\s*\{[^}]+\}/m);
+		expect(sidebarMatch).toBeTruthy();
+		const sidebarRule = sidebarMatch[0];
+		expect(sidebarRule).toContain("width: min(82vw, 420px)");
+		expect(sidebarRule).toContain("max-width: 420px");
+		expect(sidebarRule).toContain("bottom: 0");
+		expect(sidebarRule).not.toContain("height: 100vh");
+		expect(sidebarCompiled).toContain("margin-top: auto");
+
+		const searchCompiled = sass.compile(
+			path.join(REPO_ROOT, "src/sidebarApps/searchInFiles/styles.scss"),
+			{ loadPaths: [path.join(REPO_ROOT, "src")] },
+		).css;
+		expect(searchCompiled).not.toContain("height: 100% !important");
+
+		// Bottom navigation anchored at bottom: 0 with safe-area padding inside bar (never lifting bar up)
 		const navMatch = compiled.match(/#ss-workspace-nav\s*\{[^}]+\}/);
 		expect(navMatch).toBeTruthy();
 		const navRule = navMatch[0];
-		expect(navRule).toContain("bottom: env(safe-area-inset-bottom, 0px)");
-		expect(navRule).toContain("width: 100%");
-		expect(navRule).toContain("border-radius: 0");
+		expect(navRule).toContain("position: fixed");
+		expect(navRule).toContain("bottom: 0");
+		expect(navRule).toContain("left: var(--ss-sidebar-offset, 0px)");
+		expect(navRule).toContain("right: 0");
+		expect(navRule).toContain(
+			"padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px))",
+		);
+		expect(navRule).not.toContain("bottom: env(safe-area-inset-bottom");
 		expect(navRule).not.toContain("bottom: calc(8px");
 
+		// Root container disables transform so fixed bars anchor to viewport, and reserves bottom nav space
+		expect(compiled).toContain("wc-page#root");
+		expect(compiled).toContain("transform: none");
 		expect(compiled).toContain(
-			"margin-bottom: calc(var(--ss-nav-height, 52px) + env(safe-area-inset-bottom, 0px))",
+			"padding-bottom: calc(var(--ss-nav-height, 52px) + env(safe-area-inset-bottom, 0px))",
 		);
 		expect(compiled).not.toContain("height: calc(100vh - 48px - 70px)");
 
@@ -364,6 +436,60 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 		expect(spinnerSvg).toContain('stop-color="currentColor"');
 		expect(spinnerSvg).not.toContain("#2563eb");
 		expect(spinnerSvg).not.toContain("#38bdf8");
+	}, 30000);
+
+	it("mounts #ss-workspace-nav on document.body outside #root and preserves visibility across orientation/resize", () => {
+		const dom = new Window({
+			url: "http://localhost/",
+			width: 360,
+			height: 800,
+		});
+		installDomGlobals(dom);
+		const tag = require("html-tag-js");
+		const rootEl = dom.window.document.createElement("wc-page");
+		rootEl.id = "root";
+		rootEl.className = "primary";
+		dom.window.document.body.appendChild(rootEl);
+
+		const navMod = compileJsxFile(
+			"src/ui/navigation/WorkspaceNav.js",
+			{
+				"components/sidebar": Object.assign(() => {}, {
+					el: null,
+					hide: vi.fn(),
+					show: vi.fn(),
+					on: vi.fn(),
+				}),
+			},
+			{
+				tag,
+				window: Object.assign(dom.window, { root: rootEl }),
+				document: dom.window.document,
+				MutationObserver: dom.window.MutationObserver,
+				acode: { exec: vi.fn() },
+			},
+		);
+
+		const nav = navMod.default({ onOpenHome: vi.fn() });
+		nav.mount(dom.window.document.body);
+
+		expect(nav.el.parentElement).toBe(dom.window.document.body);
+		expect(rootEl.contains(nav.el)).toBe(false);
+		expect(rootEl.getAttribute("data-ss-nav")).toBe("visible");
+		expect(nav.el.classList.contains("is-hidden")).toBe(false);
+
+		// Simulate orientation change to landscape (360x800 -> 800x360): nav must stay visible
+		dom.window.innerWidth = 800;
+		dom.window.innerHeight = 360;
+		dom.window.dispatchEvent(new dom.window.Event("resize"));
+		expect(rootEl.getAttribute("data-ss-nav")).toBe("visible");
+		expect(nav.el.classList.contains("is-hidden")).toBe(false);
+
+		// Simulate soft keyboard opening in landscape (360 -> 180): nav hides
+		dom.window.innerHeight = 180;
+		dom.window.dispatchEvent(new dom.window.Event("resize"));
+		expect(rootEl.getAttribute("data-ss-nav")).toBe("hidden");
+		expect(nav.el.classList.contains("is-hidden")).toBe(true);
 	}, 30000);
 
 	it("updates app styles, editor, system bars, and open terminals on every theme change", async () => {

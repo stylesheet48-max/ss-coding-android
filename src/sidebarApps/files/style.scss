@@ -3,11 +3,11 @@
 
   .ss-files-empty {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
+    align-items: stretch;
+    justify-content: flex-start;
+    height: auto;
     width: 100%;
-    padding: 16px;
+    padding: 0;
     box-sizing: border-box;
 
     &[hidden] {
