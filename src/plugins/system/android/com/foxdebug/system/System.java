@@ -28,6 +28,7 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
@@ -38,6 +39,8 @@ import androidx.core.content.FileProvider;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
 import com.foxdebug.system.Ui.Theme;
 import java.io.BufferedReader;
@@ -122,9 +125,44 @@ public class System extends CordovaPlugin {
         @Override
         public void run() {
           setNativeContextMenuDisabled(false);
+          installWebViewInsetDeduplication();
         }
       }
     );
+  }
+
+  private void installWebViewInsetDeduplication() {
+    if (this.webView == null) {
+      return;
+    }
+
+    final View webViewView = this.webView.getView();
+    if (webViewView == null) {
+      return;
+    }
+
+    // CordovaActivity.createViews applies systemBars/displayCutout/ime as layout
+    // margins on webView when AndroidEdgeToEdge is false, yet returns the raw
+    // WindowInsets unconsumed. Subtract those already-applied margins before
+    // forwarding to WebView so env(safe-area-inset-*) is not double-counted.
+    ViewCompat.setOnApplyWindowInsetsListener(
+      webViewView,
+      (v, insets) -> {
+        ViewGroup.LayoutParams lp = v.getLayoutParams();
+        if (lp instanceof ViewGroup.MarginLayoutParams) {
+          ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
+          WindowInsetsCompat remaining = insets.inset(
+            Math.max(0, mlp.leftMargin),
+            Math.max(0, mlp.topMargin),
+            Math.max(0, mlp.rightMargin),
+            Math.max(0, mlp.bottomMargin)
+          );
+          return ViewCompat.onApplyWindowInsets(v, remaining);
+        }
+        return ViewCompat.onApplyWindowInsets(v, insets);
+      }
+    );
+    ViewCompat.requestApplyInsets(webViewView);
   }
 
   @Override

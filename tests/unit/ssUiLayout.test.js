@@ -428,6 +428,20 @@ describe("SS Coding UI Architecture, Mobile Layout & Sidebar Navigation", () => 
 		);
 		expect(compiled).not.toContain("height: calc(100vh - 48px - 70px)");
 
+		// Native Android System plugin must subtract Cordova's already-applied WebView
+		// margins from WindowInsetsCompat so env(safe-area-inset-bottom) is not double-counted
+		const systemJava = fs.readFileSync(
+			path.join(
+				REPO_ROOT,
+				"src/plugins/system/android/com/foxdebug/system/System.java",
+			),
+			"utf8",
+		);
+		expect(systemJava).toContain("installWebViewInsetDeduplication()");
+		expect(systemJava).toContain("ViewCompat.setOnApplyWindowInsetsListener");
+		expect(systemJava).toContain("insets.inset(");
+		expect(systemJava).toContain("mlp.bottomMargin");
+
 		// Spinner SVG adapts to theme currentColor
 		const spinnerSvg = fs.readFileSync(
 			path.join(REPO_ROOT, "src/res/tail-spin.svg"),
